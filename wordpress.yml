@@ -1,0 +1,223 @@
+- hosts: all
+  tasks:
+ 
+        
+          - name: apt-get update
+            apt: 
+                update_cache=yes
+                cache_valid_time=3600
+            become: yes 
+               
+          - name: Install nginx
+            apt: name=nginx state=present 
+                
+            become: yes
+
+            # - name: Copying the code
+            # copy: 
+            # src: /code/solitude/
+            # dest: /var/www/html/
+            #become: yes    
+            
+                #          - name: copy the code into html
+                #copy: 
+                #src: /tmp/solitude/
+                #remote_src: yes
+                #dest: /var/www/html      
+
+          - name: restart nginx
+            service: 
+                name: nginx
+                state: started 
+            become: yes
+           
+
+
+          - name: Installing database server
+            apt: name=mariadb-server state=present
+            become: yes
+
+          - name: restart the db server
+            service: 
+                 name: mariadb-server state:restarted 
+            become: yes
+
+          - name: Install app packages of php
+            apt: 
+               name: "{{ item }}"
+               state: present
+            with_items: 
+                -  php7.4
+                -  php-mysql
+                -  php-gd
+                -  php-common
+                -  php-mbstring
+                -  php-curl
+                -  php-cli
+                -  php-fpm
+            become: yes
+
+          - name: Creting directory for wordpress server
+            file: 
+                path: /root/wp
+                state: directory
+            become: yes
+          - name: To install the wordpress
+            get_url:
+                 url:  https://wordpress.org/latest.zip
+                 dest: /root/wp
+            become: yes
+
+          - name: to install the unzip folder
+            apt: name=unzip state=latest
+            become: yes
+                    
+          - name: to extract the wordpress
+            unarchive: src=/root/wp/wordpress-5.7.2.zip dest=/root/wp copy=no
+            become: yes            
+
+          - name: copy the data to index.html file
+            copy: 
+                src: /root/wp/wordpress/ 
+                dest: /var/www/html/
+                remote_src: yes
+            become: yes
+
+
+          - name: removing the bydefault file
+            file:
+                 path: /var/www/html/index.html
+                 state: absent
+            become: yes
+
+          - name: removing the bydefault file
+            file: 
+                 path: /var/www/html/index.nginx-debian.html
+                 state: absent
+            become: yes
+
+          - name: Creating wordpress file to host website
+            file:
+                 path: /etc/nginx/sites-enabled/wordpress.conf
+                 state: touch
+            become: yes 
+
+          - name: Copy the content to your file   
+            copy: 
+               src: /etc/nginx/sites-enabled/default
+               dest: /etc/nginx/sites-enabled/wordpress.conf
+               remote_src: yes
+            become: yes
+
+          - name: delete the index files 
+            lineinfile:
+                    path: /etc/nginx/sites-enabled/wordpress.conf
+                    regexp: "index index.html"
+                    #insertafter: "index"
+                    #line: "index.php"
+                    #firstmatch: yes
+                    state: absent
+            become: yes        
+          - name: inserting our own file
+            lineinfile: 
+                    path: /etc/nginx/sites-enabled/wordpress.conf
+                    insertafter: "using PHP"
+                    line: "        index index.php"
+                    state: present
+
+            become: yes
+
+          - name: delete another file
+            lineinfile: 
+                   path: /etc/nginx/sites-enabled/wordpress.conf
+                   regexp: "try_files"
+                   state: absent
+            become: yes
+             
+          - name: addind the line
+            lineinfile: 
+                   path: /etc/nginx/sites-enabled/wordpress.conf
+                   insertafter: "a 404"
+                   line: "                try_files $uri $uri/ /index.php?$args;"
+                   state: present
+            become: yes
+
+
+          - name: inserting the cgi line
+            lineinfile:
+                    path: /etc/nginx/sites-enabled/wordpress.conf
+                    insertafter: "FastCGI server"
+                    line: '                include snippets/fastcgi-php.conf; '
+                    state: present
+            become: yes
+              
+          - name: including fastcgi
+            lineinfile:
+                    path: /etc/nginx/sites-enabled/wordpress.conf
+                    insertafter: "FastCGI server"
+                    line: '        location ~ \.php$ { '
+                    state: present
+            become: yes  
+
+          - name: including fastcgi
+            lineinfile:
+                    path: /etc/nginx/sites-enabled/wordpress.conf
+                    insertafter: "127.0.0.1:9000;"
+                    line: "        } "
+                    state: present
+            become: yes
+
+          - name: including sqlversion
+            lineinfile:
+                    path: /etc/nginx/sites-enabled/wordpress.conf
+                    insertbefore: "127.0.0.1:9000;"
+                    line: "               fastcgi_pass unix:/var/run/php/php7.4-fpm.sock; "
+                    state: present
+            become: yes
+  
+          
+          - name: including paraenthesis
+            lineinfile:
+                    path: /etc/nginx/sites-enabled/wordpress.conf
+                    insertafter: "nginx's one"
+                    line: "         } "
+                    state: present
+            become: yes
+  
+
+          - name: including permission
+            lineinfile:
+                    path: /etc/nginx/sites-enabled/wordpress.conf
+                    insertafter: "nginx's one"
+                    line: "                deny all;"
+                    state: present
+            become: yes
+
+          - name: including fastcgi
+            lineinfile:
+                    path: /etc/nginx/sites-enabled/wordpress.conf
+                    insertafter: "nginx's one"
+                    line: '        location ~ /\.ht { '
+                    state: present
+            become: yes
+
+          - name: removing the bydefault file
+            file:
+                path: /etc/nginx/sites-enabled/default
+                state: absent
+            become: yes
+
+          - name: removing the symlink
+            file:
+                 path: /etc/nginx/sites-available/default
+                 state: absent
+            become: yes
+
+          - name: restart nginx
+            service:
+                name: nginx
+                state: restarted
+            become: yes   
+
+
+
