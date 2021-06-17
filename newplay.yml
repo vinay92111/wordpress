@@ -1,0 +1,96 @@
+- hosts: all
+  tasks:   
+     
+
+      - name: to add a line 
+        lineinfile: 
+              path: /root/myfile.txt
+              #regexp: '^(.*i)Replace this line(.*)$'
+              line: 'multiple has been added /n
+                     new line'
+              # backrefs: yes
+        become: yes
+
+
+
+      - name: to add a line after a particular line
+        lineinfile:
+                path: /root/myfile.txt
+                line: 'new line has been added after this line'
+                insertafter: 'add a new*'
+        become: yes
+   
+      - name: to add a line before particular line
+        lineinfile:
+                path: /root/myfile.txt
+                line: 'line get added before the line'
+                insertbefore: 'add a new*'
+        become: yes
+
+      - name: to remoce the commented line
+        lineinfile: 
+                path: /root/myfile.txt
+                regexp: '^#'
+                state: absent
+        become: yes
+
+        # - name: to remove the blankline
+        #lineinfile: 
+        # path: /root/myfile.txt
+        # regexp: '^\n'
+        # state: absent
+        #become: yes
+         
+
+      - name: to replace a line
+        lineinfile:
+               path: /root/myfile.txt
+               regexp: '^Replace'
+               line: "Line has been replaced"
+        become: yes
+
+
+
+      - name: to add a block line
+        blockinfile:
+                dest: /root/myfile.txt
+                content: " hello
+                           mother
+                           fucker"
+        become: yes             
+      
+      - name: to add multiple lines
+        lineinfile:
+                dest: /root/myfile.txt
+                line: '{{ item }}'
+        with_items:
+             - 'naruto'
+             - '        uzumaki'
+             - 'add hai'         
+        become: yes
+      
+      - name: hash htana hai
+        lineinfile:
+                dest: /root/myfile.txt
+                regexp: '^#hash*'
+                line: 'hash*'
+
+        become: yes
+      - name: uncommnet kar
+        lineinfile:
+                path: /root/myfile.txt
+                regexp: '^#uncomment kar'
+                line: 'uncomment kar'
+        become: yes
+
+
+      - name: add our comment
+        ansible.builtin.lineinfile:
+                path : /root/myfile.txt
+                regexp: '^#add this line'
+                insertbefore: 'add'
+                line: 'apna comment'
+
+        become: yes
+
+                
