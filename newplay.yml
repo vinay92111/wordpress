@@ -55,8 +55,8 @@
         blockinfile:
                 dest: /root/myfile.txt
                 content: " hello
-                           mother
-                           fucker"
+                           block
+                           file"
         become: yes             
       
       - name: to add multiple lines
